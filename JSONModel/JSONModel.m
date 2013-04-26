@@ -72,7 +72,7 @@ static NSMutableDictionary* keyMappers = nil;
 -(void)__setup__
 {
     //fetch the class name for faster access
-    _className = NSStringFromClass([self class]);
+    self.className = NSStringFromClass([self class]);
 
     //if first instnce of this model, generate the property list
     if (!classProperties[_className]) {

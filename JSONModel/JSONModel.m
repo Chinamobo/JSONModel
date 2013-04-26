@@ -35,7 +35,7 @@ static NSMutableDictionary* keyMappers = nil;
 
 #pragma mark - JSONModel private interface
 @interface JSONModel()
-@property (strong, nonatomic, readonly) NSString* className;
+@property (strong, nonatomic) NSString* className;
 @end
 
 #pragma mark - JSONModel implementation

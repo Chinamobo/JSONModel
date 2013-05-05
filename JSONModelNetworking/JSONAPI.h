@@ -1,11 +1,11 @@
 //
 //  JSONAPI.h
 //
-//  @version 0.8.4
+//  @version 0.9.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
-// Copyright (c) 2012 Marin Todorov, Underplot ltd.
+// Copyright (c) 2012-2013 Marin Todorov, Underplot ltd.
 // This code is distributed under the terms and conditions of the MIT license.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -20,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class for working with JSON APIs. It builds upon the JSONHTTPClient class
+ * @discussion Class for working with JSON APIs. It builds upon the JSONHTTPClient class
  * and facilitates making requests to the same web host. Also features helper
  * method for making calls to a JSON RPC service
  */
@@ -46,15 +46,6 @@
 
 /** @name Making GET API requests */
 /**
- * Makes a synchronious GET request to the API
- * @param path the URL path to add to the base API URL for this HTTP call
- * @param params the variables to pass to the API
- * @param err pointer to an NSError object to pass back an error if needed
- * @return the JSON response as desrialized object
- */
-+(id)getWithPath:(NSString*)path andParams:(NSDictionary*)params error:(NSError**)err;
-
-/**
  * Makes an asynchronious GET request to the API
  * @param path the URL path to add to the base API URL for this HTTP call
  * @param params the variables to pass to the API
@@ -69,15 +60,6 @@
  * Makes a POST request to the API
  * @param path the URL path to add to the base API URL for this HTTP call
  * @param params the variables to pass to the API
- * @param err pointer to an NSError object to pass back an error if needed
- * @return the JSON response as desrialized object
- */
-+(id)postWithPath:(NSString*)path andParams:(NSDictionary*)params error:(NSError**)err;
-
-/**
- * Makes a POST request to the API
- * @param path the URL path to add to the base API URL for this HTTP call
- * @param params the variables to pass to the API
  * @param completeBlock a JSONObjectBlock block to execute upon completion
  */
 +(void)postWithPath:(NSString*)path andParams:(NSDictionary*)params completion:(JSONObjectBlock)completeBlock;
@@ -85,15 +67,6 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 /** @name JSON RPC (1.0) request method */
-/**
- * Makes a synchronious JSON RPC request to the API
- * @param method the HTTP method name; GET or POST only
- * @param args the list of arguments to pass to the API
- * @param err pointer to an NSError object to pass back an error if needed
- * @return the JSON response as desrialized object
- */
-+(id)rpcWithMethodName:(NSString*)method andArguments:(NSArray*)args error:(NSError**)err;
-
 /**
  * Makes an asynchronious JSON RPC request to the API
  * @param method the HTTP method name; GET or POST only

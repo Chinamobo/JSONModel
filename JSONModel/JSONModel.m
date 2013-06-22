@@ -20,23 +20,19 @@
 #import "JSONModelClassProperty.h"
 #import "JSONModelArray.h"
 
+#pragma mark - associated objects names
+static const char * kMapperObjectKey;
+static const char * kClassPropertiesKey;
+static const char * kClassRequiredPropertyNamesKey;
+static const char * kIndexPropertyNameKey;
+
 #pragma mark - class static variables
 static NSArray* allowedJSONTypes = nil;
 static NSArray* allowedPrimitiveTypes = nil;
-
 static JSONValueTransformer* valueTransformer = nil;
 
 #pragma mark - model cache
-static NSMutableDictionary* classProperties = nil;
-static NSMutableDictionary* classRequiredPropertyNames = nil;
-static NSMutableDictionary* classIndexes = nil;
-
-static NSMutableDictionary* keyMappers = nil;
-
-#pragma mark - JSONModel private interface
-@interface JSONModel()
-@property (strong, nonatomic, readonly) NSString* _className_;
-@end
+static JSONKeyMapper* globalKeyMapper = nil;
 
 #pragma mark - JSONModel implementation
 @implementation JSONModel
@@ -60,37 +56,28 @@ static NSMutableDictionary* keyMappers = nil;
                 @"BOOL", @"float", @"int", @"long", @"double", @"short"
             ];
             
-            classProperties = [NSMutableDictionary dictionary];
-            classRequiredPropertyNames = [NSMutableDictionary dictionary];
-            classIndexes = [NSMutableDictionary dictionary];
             valueTransformer = [[JSONValueTransformer alloc] init];
-            keyMappers = [NSMutableDictionary dictionary];
 		}
     });
 }
 
 -(void)__setup__
 {
-    //fetch the class name for faster access
-    __className_ = NSStringFromClass([self class]);
-
-    //if first instnce of this model, generate the property list
-    if (!classProperties[__className_]) {
+    //if first instance of this model, generate the property list
+    if (!objc_getAssociatedObject(self.class, &kClassPropertiesKey)) {
         [self __restrospectProperties];
     }
 
-    //load the class index name
-    _indexPropertyName = classIndexes[__className_];
-    
-    //if first instnce of this model, generate the property mapper
-    if (!keyMappers[__className_]) {
-        
-        id mapper = [[self class] keyMapper];
-        if (mapper) {
-            keyMappers[__className_] = mapper;
-        }
+    //if there's a custom key mapper, store it in the associated object
+    id mapper = [[self class] keyMapper];
+    if ( mapper && !objc_getAssociatedObject(self.class, &kMapperObjectKey) ) {
+        objc_setAssociatedObject(
+                                 self.class,
+                                 &kMapperObjectKey,
+                                 mapper,
+                                 OBJC_ASSOCIATION_RETAIN // This is atomic
+                                 );
     }
-
 }
 
 -(id)init
@@ -160,7 +147,7 @@ static NSMutableDictionary* keyMappers = nil;
     }
     
     
-    //do initial class setup, retrospec properties
+    //do initial class setup, retrospect properties
     [self __setup__];
     
     //check if all required properties are present
@@ -168,8 +155,11 @@ static NSMutableDictionary* keyMappers = nil;
     NSMutableSet* requiredProperties = [self __requiredPropertyNames];
     NSSet* incomingKeys = [NSSet setWithArray: incomingKeysArray];
     
-    //get the key mapper
-    JSONKeyMapper* keyMapper = keyMappers[__className_];
+    //get the model key mapper
+    JSONKeyMapper* keyMapper = objc_getAssociatedObject(self.class, &kMapperObjectKey);
+    
+    //if no custom mapper, check for a global mapper
+    if (keyMapper==nil && globalKeyMapper!=nil) keyMapper = globalKeyMapper;
     
     //transform the key names, if neccessary
     if (keyMapper) {
@@ -200,7 +190,7 @@ static NSMutableDictionary* keyMappers = nil;
         [requiredProperties minusSet:incomingKeys];
 
         //not all required properties are in - invalid input
-        JMLog(@"Incoming data was invalid [%@ initWithDictionary:]. Keys missing: %@", self._className_, requiredProperties);
+        JMLog(@"Incoming data was invalid [%@ initWithDictionary:]. Keys missing: %@", self.class, requiredProperties);
         
         if (err) *err = [JSONModelError errorInvalidDataWithMissingKeys:requiredProperties];
         return nil;
@@ -247,16 +237,21 @@ static NSMutableDictionary* keyMappers = nil;
         }
                 
         //check if there's matching property in the model
-        //JSONModelClassProperty* property = classProperties[self.className][key];
-        
         if (property) {
+            
+            // check for custom setter, than the model doesn't need to do any guessing
+            // how to read the property's value from JSON
+            if ([self __customSetValue:jsonValue forProperty:property]) {
+                //skit to next JSON key
+                continue;
+            };
             
             // 0) handle primitives
             if (property.type == nil && property.structName==nil) {
                 
-                //just copy the value
+                //generic setter
                 [self setValue:jsonValue forKey: property.name];
-                
+
                 //skip directly to the next key
                 continue;
             }
@@ -378,23 +373,39 @@ static NSMutableDictionary* keyMappers = nil;
 //returns a set of the required keys for the model
 -(NSMutableSet*)__requiredPropertyNames
 {
-    if (!classRequiredPropertyNames[self._className_]) {
-        classRequiredPropertyNames[self._className_] = [NSMutableSet set];
+    //fetch the associated property names
+    NSMutableSet* classRequiredPropertyNames = objc_getAssociatedObject(self.class, &kClassRequiredPropertyNamesKey);
+    
+    if (!classRequiredPropertyNames) {
+        classRequiredPropertyNames = [NSMutableSet set];
         [[self __properties__] enumerateObjectsUsingBlock:^(JSONModelClassProperty* p, NSUInteger idx, BOOL *stop) {
-            if (!p.isOptional) [classRequiredPropertyNames[self._className_] addObject:p.name];
+            if (!p.isOptional) [classRequiredPropertyNames addObject:p.name];
         }];
+        
+        //persist the list
+        objc_setAssociatedObject(
+                                 self.class,
+                                 &kClassRequiredPropertyNamesKey,
+                                 classRequiredPropertyNames,
+                                 OBJC_ASSOCIATION_RETAIN // This is atomic
+                                 );
     }
-    return classRequiredPropertyNames[self._className_];
+    return classRequiredPropertyNames;
 }
 
 //returns a list of the model's properties
 -(NSArray*)__properties__
 {
-    if (classProperties[self._className_]) return [classProperties[self._className_] allValues];
+    //fetch the associated object
+    NSDictionary* classProperties = objc_getAssociatedObject(self.class, &kClassPropertiesKey);
+    if (classProperties) return [classProperties allValues];
 
-    if (!self._className_) [self __setup__];
-    [self __restrospectProperties];
-    return [classProperties[self._className_] allValues];
+    //if here, the class needs to retrospect itself
+    [self __setup__];
+    
+    //return the property list
+    classProperties = objc_getAssociatedObject(self.class, &kClassPropertiesKey);
+    return [classProperties allValues];
 }
 
 //retrospects the class, get's a list of the class properties
@@ -460,7 +471,13 @@ static NSMutableDictionary* keyMappers = nil;
                     if ([protocolName isEqualToString:@"Optional"]) {
                         p.isOptional = YES;
                     } else if([protocolName isEqualToString:@"Index"]) {
-                        classIndexes[self._className_] = p.name;
+                        p.isIndex = YES;
+                        objc_setAssociatedObject(
+                                                 self.class,
+                                                 &kIndexPropertyNameKey,
+                                                 p.name,
+                                                 OBJC_ASSOCIATION_RETAIN // This is atomic
+                                                 );
                     } else if([protocolName isEqualToString:@"ConvertOnDemand"]) {
                         p.convertsOnDemand = YES;
                     } else {
@@ -494,7 +511,7 @@ static NSMutableDictionary* keyMappers = nil;
                     
                     //type not allowed - programmer mistaked -> exception
                     @throw [NSException exceptionWithName:@"JSONModelProperty type not allowed"
-                                                   reason:[NSString stringWithFormat:@"Property type of %@.%@ is not supported by JSONModel.", self._className_, p.name]
+                                                   reason:[NSString stringWithFormat:@"Property type of %@.%@ is not supported by JSONModel.", self.class, p.name]
                                                  userInfo:nil];
                 }
                 
@@ -512,7 +529,12 @@ static NSMutableDictionary* keyMappers = nil;
     }
     
     //finally store the property index in the static property index
-    classProperties[self._className_] = propertyIndex;
+    objc_setAssociatedObject(
+                             self.class,
+                             &kClassPropertiesKey,
+                             [propertyIndex copy],
+                             OBJC_ASSOCIATION_RETAIN // This is atomic
+                             );
 }
 
 #pragma mark - built-in transformer methods
@@ -580,9 +602,12 @@ static NSMutableDictionary* keyMappers = nil;
         if (property.type == [NSArray class] || property.type == [NSMutableArray class]) {
             NSMutableArray* tempArray = [NSMutableArray arrayWithCapacity: [(NSArray*)value count] ];
             for (id<AbstractJSONModelProtocol> model in (NSArray*)value) {
-                [tempArray addObject: [model toDictionary] ];
+                if ([model respondsToSelector:@selector(toDictionary)]) {
+                    [tempArray addObject: [model toDictionary]];
+                } else
+                    [tempArray addObject: model];
             }
-            return [NSArray arrayWithArray: tempArray];
+            return [tempArray copy];
         }
         
         //check if should export dictionary of dictionaries
@@ -597,6 +622,75 @@ static NSMutableDictionary* keyMappers = nil;
     }
     
     return value;
+}
+
+#pragma mark - custom transformations
+-(BOOL)__customSetValue:(id<NSObject>)value forProperty:(JSONModelClassProperty*)property
+{
+    if (property.setterType == kNotInspected) {
+        //check for a custom property setter method
+        NSString* ucfirstName = [property.name stringByReplacingCharactersInRange:NSMakeRange(0,1)
+                                                                       withString:[[property.name substringToIndex:1] uppercaseString]];
+        NSString* selectorName = [NSString stringWithFormat:@"set%@With%@:", ucfirstName,
+                                  [JSONValueTransformer classByResolvingClusterClasses:[value class]]
+                                  ];
+
+        SEL customPropertySetter = NSSelectorFromString(selectorName);
+        
+        //check if there's a custom selector like this
+        if (![self respondsToSelector: customPropertySetter]) {
+            property.setterType = kNo;
+            return NO;
+        }
+        
+        //cache the custom setter selector
+        property.setterType = kCustom;
+        property.customSetter = customPropertySetter;
+    }
+    
+    if (property.setterType==kCustom) {
+        //call the custom setter
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [self performSelector:property.customSetter withObject:value];
+        #pragma clang diagnostic pop
+        return YES;
+    }
+    
+    return NO;
+}
+
+-(BOOL)__customGetValue:(id<NSObject>*)value forProperty:(JSONModelClassProperty*)property
+{
+    if (property.getterType == kNotInspected) {
+        //check for a custom property getter method
+        NSString* ucfirstName = [property.name stringByReplacingCharactersInRange: NSMakeRange(0,1)
+                                                                       withString: [[property.name substringToIndex:1] uppercaseString]];
+        NSString* selectorName = [NSString stringWithFormat:@"JSONObjectFor%@", ucfirstName];
+        
+        SEL customPropertyGetter = NSSelectorFromString(selectorName);
+        if (![self respondsToSelector: customPropertyGetter]) {
+            property.getterType = kNo;
+            return NO;
+        }
+        
+        property.getterType = kCustom;
+        property.customGetter = customPropertyGetter;
+
+    }
+    
+    if (property.getterType==kCustom) {
+        //call the custom getter
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        
+        *value = [self performSelector:property.customGetter withObject:nil];
+        
+        #pragma clang diagnostic pop
+        return YES;
+    }
+    
+    return NO;
 }
 
 #pragma mark - persistance
@@ -632,7 +726,7 @@ static NSMutableDictionary* keyMappers = nil;
     id value;
 
     //get the key mapper
-    JSONKeyMapper* keyMapper = keyMappers[__className_];
+    JSONKeyMapper* keyMapper = objc_getAssociatedObject(self.class, &kMapperObjectKey);
     
     //loop over all properties
     for (JSONModelClassProperty* p in properties) {
@@ -649,6 +743,13 @@ static NSMutableDictionary* keyMappers = nil;
         if ([keyPath rangeOfString:@"."].location != NSNotFound) {
             //there are sub-keys, introduce dictionaries for them
             [self __createDictionariesForKeyPath:keyPath inDictionary:&tempDictionary];
+        }
+        
+        //check for custom getter
+        if ([self __customGetValue:&value forProperty:p]) {
+            //custom getter, all done
+            [tempDictionary setValue:value forKey:keyPath];
+            continue;
         }
         
         //export nil values as JSON null, so that the structure of the exported data
@@ -678,7 +779,10 @@ static NSMutableDictionary* keyMappers = nil;
             
             // 2) check for standard types OR 2.1) primitives
             if (p.structName==nil && (p.isStandardJSONType || p.type==nil)) {
+
+                //generic get value
                 [tempDictionary setValue:value forKeyPath: keyPath];
+                
                 continue;
             }
             
@@ -709,16 +813,11 @@ static NSMutableDictionary* keyMappers = nil;
                                                  userInfo:nil];
                     return nil;
                 }
-                
-                
-                
             }
-            
         }
-        
     }
     
-    return [NSDictionary dictionaryWithDictionary: tempDictionary];
+    return [tempDictionary copy];
 }
 
 //exports model to a dictionary and then to a JSON string
@@ -783,6 +882,12 @@ static NSMutableDictionary* keyMappers = nil;
 }
 
 #pragma mark - custom comparison methods
+-(NSString*)indexPropertyName
+{
+    //custom getter for an associated object
+    return objc_getAssociatedObject(self.class, &kIndexPropertyNameKey);
+}
+
 -(BOOL)isEqual:(id)object
 {
     //bail early if different classes
@@ -835,7 +940,7 @@ static NSMutableDictionary* keyMappers = nil;
 {
     NSMutableString* text = [NSMutableString stringWithFormat:@"<%@> \n", [self class]];
     
-    for (JSONModelClassProperty *p in [self __properties__]) {        
+    for (JSONModelClassProperty *p in [self __properties__]) {
         id value = [self valueForKey:p.name];
         NSString* valueDescription = (value)?[value description]:@"<nil>";
         
@@ -856,6 +961,11 @@ static NSMutableDictionary* keyMappers = nil;
 +(JSONKeyMapper*)keyMapper
 {
     return nil;
+}
+
++(void)setGlobalKeyMapper:(JSONKeyMapper*)globalKeyMapperParam
+{
+    globalKeyMapper = globalKeyMapperParam;
 }
 
 @end

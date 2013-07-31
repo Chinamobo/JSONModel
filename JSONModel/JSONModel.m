@@ -14,6 +14,11 @@
 //
 // The MIT License in plain English: http://www.touch-code-magazine.com/JSONModel/MITLicense
 
+#if !__has_feature(objc_arc)
+#error The JSONMOdel framework is ARC only, you can enable ARC on per file basis.
+#endif
+
+
 #import <objc/runtime.h>
 
 #import "JSONModel.h"
@@ -53,7 +58,9 @@ static JSONKeyMapper* globalKeyMapper = nil;
             ];
             
             allowedPrimitiveTypes = @[
-                @"BOOL", @"float", @"int", @"long", @"double", @"short"
+                @"BOOL", @"float", @"int", @"long", @"double", @"short",
+                //and some famous aliases
+                @"NSInteger", @"NSUInteger"
             ];
             
             valueTransformer = [[JSONValueTransformer alloc] init];
@@ -242,7 +249,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
             // check for custom setter, than the model doesn't need to do any guessing
             // how to read the property's value from JSON
             if ([self __customSetValue:jsonValue forProperty:property]) {
-                //skit to next JSON key
+                //skip to next JSON key
                 continue;
             };
             
@@ -441,7 +448,6 @@ static JSONKeyMapper* globalKeyMapper = nil;
             
             //get property attributes
             const char *attrs = property_getAttributes(property);
-            
             scanner = [NSScanner scannerWithString:
                        [NSString stringWithUTF8String:attrs]
                        ];
@@ -944,7 +950,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
         id value = [self valueForKey:p.name];
         NSString* valueDescription = (value)?[value description]:@"<nil>";
         
-        if (p.isStandardJSONType && [valueDescription length]>60 && !p.convertsOnDemand) {
+        if (p.isStandardJSONType && ![value respondsToSelector:@selector(count)] && [valueDescription length]>60 && !p.convertsOnDemand) {
 
             //cap description for longer values
             valueDescription = [NSString stringWithFormat:@"%@...", [valueDescription substringToIndex:59]];

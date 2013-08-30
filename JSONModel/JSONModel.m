@@ -448,9 +448,14 @@ static JSONKeyMapper* globalKeyMapper = nil;
             
             //get property attributes
             const char *attrs = property_getAttributes(property);
-            scanner = [NSScanner scannerWithString:
-                       [NSString stringWithUTF8String:attrs]
-                       ];
+            NSString* propertyAttributes = [NSString stringWithUTF8String:attrs];
+            
+            if ([propertyAttributes hasPrefix:@"Tc,"]) {
+                //mask BOOLs as structs so they can have custom convertors
+                p.structName = @"BOOL";
+            }
+            
+            scanner = [NSScanner scannerWithString: propertyAttributes];
             
             //JMLog(@"attr: %@", [NSString stringWithCString:attrs encoding:NSUTF8StringEncoding]);
             [scanner scanUpToString:@"T" intoString: nil];
@@ -501,7 +506,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
                 
                 p.isStandardJSONType = NO;
                 p.structName = propertyType;
-                
+
             }
             //the property must be a primitive
             else {
@@ -520,9 +525,13 @@ static JSONKeyMapper* globalKeyMapper = nil;
                                                    reason:[NSString stringWithFormat:@"Property type of %@.%@ is not supported by JSONModel.", self.class, p.name]
                                                  userInfo:nil];
                 }
-                
+
             }
-            
+
+            if([[self class] propertyIsOptional:[NSString stringWithCString:propertyName encoding:NSUTF8StringEncoding]]){
+                    p.isOptional = YES;
+            }
+
             //add the property object to the temp index
             [propertyIndex setValue:p forKey:p.name];
         }
@@ -758,11 +767,18 @@ static JSONKeyMapper* globalKeyMapper = nil;
             continue;
         }
         
-        //export nil values as JSON null, so that the structure of the exported data
+        //export nil when they are not optional values as JSON null, so that the structure of the exported data
         //is still valid if it's to be imported as a model again
         if (isNull(value)) {
             
-            [tempDictionary setValue:[NSNull null] forKeyPath:keyPath];
+            if (p.isOptional)
+            {
+                [tempDictionary removeObjectForKey:keyPath];
+            }
+            else
+            {
+                [tempDictionary setValue:[NSNull null] forKeyPath:keyPath];
+            }
             continue;
         }
         
@@ -974,4 +990,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
     globalKeyMapper = globalKeyMapperParam;
 }
 
++(BOOL)propertyIsOptional:(NSString*)propertyName{
+    return NO;
+}
 @end

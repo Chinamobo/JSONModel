@@ -1,143 +1,403 @@
-JSONModel
-====================================
-------------------------------------
-Magical Data Modelling Framework for JSON
-------------------------------------
+## Magical Data Modelling Framework for JSON
 
 ![JSONModel for iOS and OSX](http://jsonmodel.com/img/jsonmodel_logolike.png)
 
 JSONModel is a library, which allows rapid creation of smart data models. You can use it in your iOS or OSX apps.
 
-**JSONModel does NOT pre-write your code** as many other libs do, instead it uses performance optimized code to introspect your model classes at run-time, thus being way more flexible when you need to do changes.
-
-JSONModel automatically introspects your model classes and the structure of your JSON input and reduces drastically the amount of code.
-
-The core task of JSONModel is to import, convert, store and export data - through the JSON data types bottleneck:
+JSONModel automatically introspects your model classes and the structure of your JSON input and reduces drastically the amount of code you have to write.
 
 [![](http://www.touch-code-magazine.com/img/json.png)](http://www.touch-code-magazine.com/img/json.png)
 
-Besides this core task JSONModel does also a whole bunch of other tasks, to help you **automate as much as possible** working with local or remote JSON data; it also does provide for you a networking layer, so you don't need to depend on 3rd party networking library (except if you don't want to)
-
-![JSONModel Class schema](http://jsonmodel.com/img/jsonschema.png)
-
-------------------------------------
-Requirements
-====================================
-
-* iOS 5.0+ (requires NSJSONSerialization)
-* OSX 10.7+ (requires NSJSONSerialization) 
-* ARC only
-* SystemConfiguration.framework
 
 ------------------------------------
 Adding JSONModel to your project
 ====================================
 
-Source files
-------------
+#### Requirements
 
-1. Download the JSONModel repository as a zip file or clone it
+* ARC only; iOS 5.0+ / OSX 10.7+
+* **SystemConfiguration.framework**
+
+#### Get it as: 1) source files
+
+1. Download the JSONModel repository as a [zip file](https://github.com/icanzilb/JSONModel/archive/master.zip) or clone it
 2. Copy the JSONModel sub-folder into your Xcode project
-3. Build your project and check that there are no compile time errors 
-(if your project is non-arc for example, you will get a compile time error from the JSONModel library)
+3. Link your app to SystemConfiguration.framework
 
-Cocoa pod
-------------
+#### or 2) via Cocoa pods
 
-1. Be sure to update your pods specs:
-
-```bash
-pod setup
-```
-
-2. In your **Podfile** add the JSONModel pod:
+In your project's **Podfile** add the JSONModel pod:
 
 ```ruby
 pod 'JSONModel'
 ```
-That's it!
+If you want to read more about CocoaPods, have a look at [this short tutorial](http://www.raywenderlich.com/12139/introduction-to-cocoapods).
 
-If you want to read more about CocoaPods, have a look at [this great tutorial](http://www.raywenderlich.com/12139/introduction-to-cocoapods).
+#### Source code documentation
+The source code includes class docs, which you can build yourself and import into Xcode:
+
+1. If you don't already have [appledoc](http://gentlebytes.com/appledoc/) installed, install it with [homebrew](http://brew.sh/) by typing `brew install appledoc`.
+2. Install the documentation into Xcode by typing `appledoc .` in the root directory of the repository.
+3. Restart Xcode if it's already running.
 
 ------------------------------------
 Basic usage
 ====================================
-1. Create a new Objective-C class for your data model and make it inherit the JSONModel class. 
 
-2. Declare properties in your header file with the name of the JSON keys you have coming in.
-
-If you are parsing this JSON:
+Consider you have a JSON like this:
 ```javascript
-{"countryCode":"DE", "country":"Germany"}
+{id:"10", "country":"Germany", "dialCode": 49, "isInEurope":true}
 ```
 
-Create the following properties:
+ * Create a new Objective-C class for your data model and make it inherit the JSONModel class. 
+ * Declare properties in your header file with the name of the JSON keys:
+
 ```objective-c
 #import "JSONModel.h"
 
-@interface LocationModel : JSONModel
+@interface CountryModel : JSONModel
 
-@property (strong, nonatomic) NSString* countryCode;
+@property (assign, nonatomic) int id;
 @property (strong, nonatomic) NSString* country;
+@property (strong, nonatomic) NSString* dialCode;
+@property (assign, nonatomic) BOOL isInEurope;
 
 @end
 ```
 There's no need to do anything in the **.m** file.
 
-3. In your app class include the JSONModel umbrella header:
-```objective-c
-#import "JSONModelLib.h"
-```
-
-4. Initialize your model with data:
+ * Initialize your model with data:
 
 ```objective-c
+#import "CountryModel.h"
+...
+
 NSString* json = (fetch here JSON from Internet) ... 
 NSError* err = nil;
-LocationModel* location = [[LocationModel alloc] initWithString:json error:&err];
-NSLog(@"Country: %@", location.country);
+CountryModel* country = [[CountryModel alloc] initWithString:json error:&err];
+
 ```
 
-or you can use the built-in async initializer to fetch JSON from the web:
+If the validation of the JSON passes you have all the corresponding properties in your model populated from the JSON. JSONModel will also try to convert as much data to the types you expect, in the example above it will:
 
-```objective-c
-LocationModel* location = [[LocationModel alloc] initFromURLWithString:@"http://api.kivaws.org/v1/loans/search.json?status=fundraising" 
-                          completion: ^(JSONModel *model, JSONModelError* e) {
-                              NSLog("Country: %@, error: %@", location.country, [e localizedDescription]);
-                          }];
-```
+* convert "id" from string (in the JSON) to an int for your class
+* just copy country's value
+* convert dialCode from number (in the JSON) to an NSString value 
+* finally convert isInEurope to a BOOL for your BOOL property
+
+And the good news is all you had to do is define the properties and their expected types.
 
 -------
-Detailed documentation and tutorials
+#### Online tutorials
+
+
+Official website: [http://www.jsonmodel.com](http://www.jsonmodel.com)
+
+Class docs online: [http://jsonmodel.com/docs/](http://jsonmodel.com/docs/)
+
+Tutorial list:
+
+ * [How to fetch and parse JSON by using data models](http://www.touch-code-magazine.com/how-to-fetch-and-parse-json-by-using-data-models/) 
+
+ * [Performance optimisation for working with JSON feeds via JSONModel](http://www.touch-code-magazine.com/performance-optimisation-for-working-with-json-feeds-via-jsonmodel/)
+
+ * [How to make a YouTube app using MGBox and JSONModel](http://www.touch-code-magazine.com/how-to-make-a-youtube-app-using-mgbox-and-jsonmodel/)
+
+-------
+Examples
 =======
 
-Information and examples: http://www.touch-code-magazine.com/JSONModel/
+(This section will be rearranged soon to showcase code)
 
-Official website: http://www.jsonmodel.com
+#### Automatic name based mapping
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "id": "123",
+  "name": "Product name",
+  "price": 12.95
+}
+</pre>
+</td>
+<td>
+<pre>
+@interface ProductModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (strong, nonatomic) NSString* name;
+@property (assign, nonatomic) float price;
+@end
 
-## JSONModel features
+@implementation ProductModel
+@end
+</pre>
+</td>
+</tr>
+</table>
 
-#### [How to fetch and parse JSON by using data models](http://www.touch-code-magazine.com/how-to-fetch-and-parse-json-by-using-data-models/) [tutorial]
+#### Model cascading (models including other models)
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "order_id": 104,
+  "total_price": 13.45,
+  "product" : {
+    "id": "123",
+    "name": "Product name",
+    "price": 12.95
+  }
+}
+</pre>
+</td>
+<td valign="top">
+<pre>
+@interface OrderModel : JSONModel
+@property (assign, nonatomic) int order_id;
+@property (assign, nonatomic) float total_price;
+@property (strong, nonatomic) ProductModel* product;
+@end
 
-* automatic data mapping
-* model cascading (models including models)
-* model collections
+@implementation OrderModel
+@end
+</pre>
+</td>
+</tr>
+</table>
 
-#### [Performance optimisation for working with JSON feeds via JSONModel](http://www.touch-code-magazine.com/performance-optimisation-for-working-with-json-feeds-via-jsonmodel/)  [tutorial]
-* one-shot or on-demand JSON to model objects conversion
+#### Model collections
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "order_id": 104,
+  "total_price": 103.45,
+  "products" : [
+    {
+      "id": "123",
+      "name": "Product #1",
+      "price": 12.95
+    },
+    {
+      "id": "137",
+      "name": "Product #2",
+      "price": 82.95
+    }
+  ]
+}
+</pre>
+</td>
+<td valign="top">
+<pre>
+@protocol ProductModel
+@end
 
-#### [How to make a YouTube app using MGBox and JSONModel](http://www.touch-code-magazine.com/how-to-make-a-youtube-app-using-mgbox-and-jsonmodel/)  [tutorial]
-* key mapping - map JSON keys from deeper levels or with mismatching names easily
+@interface ProductModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (strong, nonatomic) NSString* name;
+@property (assign, nonatomic) float price;
+@end
+
+@implementation ProductModel
+@end
+
+@interface OrderModel : JSONModel
+@property (assign, nonatomic) int order_id;
+@property (assign, nonatomic) float total_price;
+@property (strong, nonatomic) NSArray&lt;ProductModel&gt;* products;
+@end
+
+@implementation OrderModel
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+#### Key mapping
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "order_id": 104,
+  "order_details" : [
+    {
+      "name": "Product#1",
+      "price": {
+        "usd": 12.95
+      }
+    }
+  ]
+}
+</pre>
+</td>
+<td valign="top">
+<pre>
+@interface OrderModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (assign, nonatomic) float price;
+@property (strong, nonatomic) NSString* productName;
+@end
+
+@implementation OrderModel
+
++(JSONKeyMapper*)keyMapper
+{
+  return [[JSONKeyMapper alloc] initWithDictionary:@{
+    @"order_id": @"id",
+    @"order_details.name": @"productName",
+    @"order_details.price.usd": @"price"
+  }];
+}
+
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+#### Global key mapping (applies to all models in your app)
+<table>
+<tr>
+<td valign="top">
+<pre>
+[JSONModel setGlobalKeyMapper:[
+    [JSONKeyMapper alloc] initWithDictionary:@{
+      @"item_id":@"ID",
+      @"item.name": @"itemName"
+   }]
+];
+
+</pre>
+</td>
+</tr>
+</table>
+
+#### Map automatically under_score case to camelCase
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "order_id": 104,
+  "order_product" : @"Product#1",
+  "order_price" : 12.95
+}
+</pre>
+</td>
+<td valign="top">
+<pre>
+@interface OrderModel : JSONModel
+
+@property (assign, nonatomic) int orderId;
+@property (assign, nonatomic) float orderPrice;
+@property (strong, nonatomic) NSString* orderProduct;
+
+@end
+
+@implementation OrderModel
+
++(JSONKeyMapper*)keyMapper
+{
+  return [JSONKeyMapper mapperFromUnderscoreCaseToCamelCase];
+}
+
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+#### Optional properties (i.e. can be missing or null)
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "id": "123",
+  "name": null,
+  "price": 12.95
+}
+</pre>
+</td>
+<td>
+<pre>
+@interface ProductModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (strong, nonatomic) NSString&lt;Optional&gt;* name;
+@property (assign, nonatomic) float price;
+@property (strong, nonatomic) NSNumber&lt;Optional&gt;* uuid;
+@end
+
+@implementation ProductModel
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+
+#### Lazy convert collection items from dictionaries to models
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "order_id": 104,
+  "total_price": 103.45,
+  "products" : [
+    {
+      "id": "123",
+      "name": "Product #1",
+      "price": 12.95
+    },
+    {
+      "id": "137",
+      "name": "Product #2",
+      "price": 82.95
+    }
+  ]
+}
+</pre>
+</td>
+<td valign="top">
+<pre>
+@protocol ProductModel
+@end
+
+@interface ProductModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (strong, nonatomic) NSString* name;
+@property (assign, nonatomic) float price;
+@end
+
+@implementation ProductModel
+@end
+
+@interface OrderModel : JSONModel
+@property (assign, nonatomic) int order_id;
+@property (assign, nonatomic) float total_price;
+@property (strong, nonatomic) NSArray&lt;ProductModel, ConvertOnDemand&gt;* products;
+@end
+
+@implementation OrderModel
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+
+
 * JSON HTTP client - a thin HTTP client for simple async JSON requests
-
-More tutorials to come on ...
-
 * json validation
-
 * data transformations
 * error handling
 * custom data validation
-* automatic underscore_naming to camelCaseNaming mapping
 * synchronious and asynchronious networking
 * JSON API client
 * JSON RPC 1.0 client
@@ -146,54 +406,22 @@ More tutorials to come on ...
 * and more.
 
 -------
-License
-=======
 
-This code is distributed under the terms and conditions of the MIT license. 
-
--------
-Contribution guidelines
-=======
-
-* if you are fixing a bug you discovered, please add also a unit test so I know how exactly to reproduce the bug before merging
-
--------
-Contributors
+Misc
 =======
 
 Author: Marin Todorov
 
-Contributors: Christian Hoffmann, Mark Joslin, Julien Vignali, Symvaro GmbH, BB9z
+Contributors: Christian Hoffmann, Mark Joslin, Julien Vignali, Symvaro GmbH, BB9z.
+Also everyone who did successful [pull requests](https://github.com/icanzilb/JSONModel/graphs/contributors).
 
-----------
-Change-log
-==========
+Change log : [https://github.com/icanzilb/JSONModel/blob/master/Changelog.md](https://github.com/icanzilb/JSONModel/blob/master/Changelog.md)
 
-**Version 0.9** @ 2013-05-01
+-------
+#### License
+This code is distributed under the terms and conditions of the MIT license. 
 
-- Refactor of all networking code
-- Removing all sync request methods
-- Bug fixes up to issue #37
+-------
+#### Contribution guidelines
 
-**Version 0.8.3** @ 2013-01-24
-
-- Bug fixes, optimisation and clean up. Github issues up to #15
-
-**Version 0.8.2** @ 2013-01-01
-
-- Added distribution as a Cocoa Pod
-
-**Version 0.8.1** @ 2012-12-31
-
-- Fixed Xcode workspace for the demo apps
-
-**Version 0.8.0** @ 2012-12-31
-
-- OSX support, test and demos
-- automatic network indicator for iOS
-- bug fixes, speed improvements
-- added better README
-
-**Version 0.7.8** @ 2012-12-25
-
-- Initial release with semantic versioning
+**NB!** If you are fixing a bug you discovered, please add also a unit test so I know how exactly to reproduce the bug before merging.

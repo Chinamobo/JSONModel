@@ -109,10 +109,22 @@ extern BOOL isNull(id value)
 }
 
 
-#pragma mark - BOOL <-> number
+#pragma mark - BOOL <-> number/string
 -(NSNumber*)BOOLFromNSNumber:(NSNumber*)number
 {
     if (isNull(number)) return @0;
+    return number;
+}
+
+-(NSNumber*)BOOLFromNSString:(NSString*)string
+{
+    int val = [string intValue];
+    if (val!=0) val=1;
+    return @(val);
+}
+
+-(NSNumber*)JSONObjectFromBOOL:(NSNumber*)number
+{
     return number;
 }
 
@@ -172,7 +184,7 @@ extern BOOL isNull(id value)
 -(NSString*)JSONObjectFromNSDate:(NSDate*)date
 {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZ"];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZ"];
     
     return [dateFormatter stringFromDate:date];
 }

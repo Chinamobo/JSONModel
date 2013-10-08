@@ -1,7 +1,7 @@
 //
 //  JSONModelHTTPClient.h
 //
-//  @version 0.9.0
+//  @version 0.9.3
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -39,7 +39,7 @@ extern NSString* const kContentTypeWWWEncoded;
  * @param json object derived from a JSON string
  * @param err JSONModelError or nil
  */
-typedef void (^JSONObjectBlock)(NSDictionary* json, JSONModelError* err);
+typedef void (^JSONObjectBlock)(id json, JSONModelError* err);
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - configuration methods
@@ -120,6 +120,27 @@ typedef void (^JSONObjectBlock)(NSDictionary* json, JSONModelError* err);
  * @param completeBlock JSONObjectBlock to execute upon completion
  */
 +(void)getJSONFromURLWithString:(NSString*)urlString params:(NSDictionary*)params completion:(JSONObjectBlock)completeBlock;
+
+/**
+ * Makes a request to the given URL address and fetches a JSON response.
+ * @param urlString the URL as a string
+ * @param method the method of the request as a string
+ * @param params a dictionary of key / value pairs to be send as variables to the request
+ * @param bodyString the body of the POST request as a string
+ * @param completeBlock JSONObjectBlock to execute upon completion
+ */
++(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary*)params orBodyString:(NSString*)bodyString completion:(JSONObjectBlock)completeBlock;
+
+/**
+ * Makes a request to the given URL address and fetches a JSON response.
+ * @param urlString the URL as a string
+ * @param method the method of the request as a string
+ * @param params a dictionary of key / value pairs to be send as variables to the request
+ * @param bodyString the body of the POST request as a string
+ * @param headers the headers to set on the request - overrides those in +requestHeaders
+ * @param completeBlock JSONObjectBlock to execute upon completion
+ */
++(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary*)params orBodyString:(NSString*)bodyString headers:(NSDictionary*)headers completion:(JSONObjectBlock)completeBlock;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - POST synchronious JSON calls

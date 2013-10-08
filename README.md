@@ -95,7 +95,7 @@ Official website: [http://www.jsonmodel.com](http://www.jsonmodel.com)
 
 Class docs online: [http://jsonmodel.com/docs/](http://jsonmodel.com/docs/)
 
-Tutorial list:
+Step-by-step tutorials:
 
  * [How to fetch and parse JSON by using data models](http://www.touch-code-magazine.com/how-to-fetch-and-parse-json-by-using-data-models/) 
 
@@ -106,8 +106,6 @@ Tutorial list:
 -------
 Examples
 =======
-
-(This section will be rearranged soon to showcase code)
 
 #### Automatic name based mapping
 <table>
@@ -157,7 +155,7 @@ Examples
 @interface OrderModel : JSONModel
 @property (assign, nonatomic) int order_id;
 @property (assign, nonatomic) float total_price;
-@property (strong, nonatomic) ProductModel* product;
+@property (strong, nonatomic) <b>ProductModel*</b> product;
 @end
 
 @implementation OrderModel
@@ -192,8 +190,8 @@ Examples
 </td>
 <td valign="top">
 <pre>
-@protocol ProductModel
-@end
+<b>@protocol ProductModel
+@end</b>
 
 @interface ProductModel : JSONModel
 @property (assign, nonatomic) int id;
@@ -207,7 +205,7 @@ Examples
 @interface OrderModel : JSONModel
 @property (assign, nonatomic) int order_id;
 @property (assign, nonatomic) float total_price;
-@property (strong, nonatomic) NSArray&lt;ProductModel&gt;* products;
+@property (strong, nonatomic) <b>NSArray&lt;ProductModel&gt;*</b> products;
 @end
 
 @implementation OrderModel
@@ -248,9 +246,9 @@ Examples
 +(JSONKeyMapper*)keyMapper
 {
   return [[JSONKeyMapper alloc] initWithDictionary:@{
-    @"order_id": @"id",
+  <b>  @"order_id": @"id",
     @"order_details.name": @"productName",
-    @"order_details.price.usd": @"price"
+    @"order_details.price.usd": @"price"</b>
   }];
 }
 
@@ -265,12 +263,12 @@ Examples
 <tr>
 <td valign="top">
 <pre>
-[JSONModel setGlobalKeyMapper:[
+<b>[JSONModel setGlobalKeyMapper:[</b>
     [JSONKeyMapper alloc] initWithDictionary:@{
       @"item_id":@"ID",
       @"item.name": @"itemName"
    }]
-];
+<b>];</b>
 
 </pre>
 </td>
@@ -303,7 +301,7 @@ Examples
 
 +(JSONKeyMapper*)keyMapper
 {
-  return [JSONKeyMapper mapperFromUnderscoreCaseToCamelCase];
+  return <b>[JSONKeyMapper mapperFromUnderscoreCaseToCamelCase];</b>
 }
 
 @end
@@ -328,12 +326,54 @@ Examples
 <pre>
 @interface ProductModel : JSONModel
 @property (assign, nonatomic) int id;
-@property (strong, nonatomic) NSString&lt;Optional&gt;* name;
+@property (strong, nonatomic) NSString<b>&lt;Optional&gt;</b>* name;
 @property (assign, nonatomic) float price;
-@property (strong, nonatomic) NSNumber&lt;Optional&gt;* uuid;
+@property (strong, nonatomic) NSNumber<b>&lt;Optional&gt;</b>* uuid;
 @end
 
 @implementation ProductModel
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+#### Ignored properties (i.e. JSONModel completely ignores them)
+<table>
+<tr>
+<td valign="top">
+<pre>
+{
+  "id": "123",
+  "name": null
+}
+</pre>
+</td>
+<td>
+<pre>
+@interface ProductModel : JSONModel
+@property (assign, nonatomic) int id;
+@property (strong, nonatomic) NSString<b>&lt;Ignore&gt;</b>* customProperty;
+@end
+
+@implementation ProductModel
+@end
+</pre>
+</td>
+</tr>
+</table>
+
+
+#### Make all model properties optional (avoid if possible)
+<table>
+<tr>
+<td valign="top">
+<pre>
+@implementation ProductModel
+<b>+(BOOL)propertyIsOptional:(NSString*)propertyName
+{
+  return YES;
+}</b>
 @end
 </pre>
 </td>
@@ -381,7 +421,7 @@ Examples
 @interface OrderModel : JSONModel
 @property (assign, nonatomic) int order_id;
 @property (assign, nonatomic) float total_price;
-@property (strong, nonatomic) NSArray&lt;ProductModel, ConvertOnDemand&gt;* products;
+@property (strong, nonatomic) NSArray&lt;ProductModel, <b>ConvertOnDemand</b>&gt;* products;
 @end
 
 @implementation OrderModel
@@ -391,18 +431,43 @@ Examples
 </tr>
 </table>
 
+#### Using the built-in thin HTTP client
 
+```ruby
 
-* JSON HTTP client - a thin HTTP client for simple async JSON requests
+//add extra headers
+[[JSONHTTPClient requestHeaders] setValue:@"MySecret" forKey:@"AuthorizationToken"];
+
+//make post, get requests
+[JSONHTTPClient postJSONFromURLWithString:@"http://mydomain.com/api"
+                                   params:@{@"postParam1":@"value1"}
+                               completion:^(id json, JSONModelError *err) {
+                                   
+                                   //check err, process json ...
+                                   
+                               }];
+```
+
+#### Export model to NSDictionary or to JSON text
+
+```ruby
+
+ProductModel* pm = [[ProductModel alloc] initWithString:jsonString error:nil];
+pm.name = @"Changed Name";
+
+//convert to dictionary
+NSDictionary* dict = [pm toDictionary];
+
+//convert to text
+NSString* string = [pm toJSONString];
+
+```
+
 * json validation
 * data transformations
 * error handling
 * custom data validation
-* synchronious and asynchronious networking
-* JSON API client
-* JSON RPC 1.0 client
 * automatic compare and equality features
-* export models back to NSDictionary or JSON text
 * and more.
 
 -------
@@ -410,7 +475,7 @@ Examples
 Misc
 =======
 
-Author: Marin Todorov
+Author: [Marin Todorov](http://www.touch-code-magazine.com)
 
 Contributors: Christian Hoffmann, Mark Joslin, Julien Vignali, Symvaro GmbH, BB9z.
 Also everyone who did successful [pull requests](https://github.com/icanzilb/JSONModel/graphs/contributors).

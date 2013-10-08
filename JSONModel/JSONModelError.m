@@ -1,7 +1,7 @@
 //
 //  JSONModelError.m
 //
-//  @version 0.9.0
+//  @version 0.9.3
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -18,14 +18,16 @@
 
 NSString* const JSONModelErrorDomain = @"JSONModelErrorDomain";
 NSString* const kJSONModelMissingKeys = @"kJSONModelMissingKeys";
+NSString* const kJSONModelTypeMismatch = @"kJSONModelTypeMismatch";
 
 @implementation JSONModelError
 
-+(id)errorInvalidData
++(id)errorInvalidDataWithMessage:(NSString*)message
 {
+	message = [NSString stringWithFormat:@"Invalid JSON data: %@", message];
     return [JSONModelError errorWithDomain:JSONModelErrorDomain
                                                    code:kJSONModelErrorInvalidData
-                                                userInfo:@{NSLocalizedDescriptionKey:@"Invalid JSON data. Malformed JSON, server response invalid or other reason for invalid input to a JSONModel class."}];
+                                                userInfo:@{NSLocalizedDescriptionKey:message}];
 }
 
 +(id)errorInvalidDataWithMissingKeys:(NSSet *)keys
@@ -33,6 +35,13 @@ NSString* const kJSONModelMissingKeys = @"kJSONModelMissingKeys";
     return [JSONModelError errorWithDomain:JSONModelErrorDomain
                                       code:kJSONModelErrorInvalidData
                                   userInfo:@{NSLocalizedDescriptionKey:@"Invalid JSON data. Required JSON keys are missing from the input. Check the error user information.",kJSONModelMissingKeys:[keys allObjects]}];
+}
+
++(id)errorInvalidDataWithTypeMismatch:(NSString*)mismatchDescription
+{
+    return [JSONModelError errorWithDomain:JSONModelErrorDomain
+                                      code:kJSONModelErrorInvalidData
+                                  userInfo:@{NSLocalizedDescriptionKey:@"Invalid JSON data. The JSON type mismatches the expected type. Check the error user information.",kJSONModelTypeMismatch:mismatchDescription}];
 }
 
 +(id)errorBadResponse

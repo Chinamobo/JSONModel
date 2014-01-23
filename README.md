@@ -46,7 +46,7 @@ Basic usage
 
 Consider you have a JSON like this:
 ```javascript
-{id:"10", "country":"Germany", "dialCode": 49, "isInEurope":true}
+{"id":"10", "country":"Germany", "dialCode": 49, "isInEurope":true}
 ```
 
  * Create a new Objective-C class for your data model and make it inherit the JSONModel class. 
@@ -490,3 +490,6 @@ This code is distributed under the terms and conditions of the MIT license.
 #### Contribution guidelines
 
 **NB!** If you are fixing a bug you discovered, please add also a unit test so I know how exactly to reproduce the bug before merging.
+
+-------
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/icanzilb/jsonmodel/trend.png)](https://bitdeli.com/free "Bitdeli Badge")

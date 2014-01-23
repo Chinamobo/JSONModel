@@ -1,7 +1,7 @@
 //
 //  JSONModelHTTPClient.h
 //
-//  @version 0.9.3
+//  @version 0.11.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -141,6 +141,17 @@ typedef void (^JSONObjectBlock)(id json, JSONModelError* err);
  * @param completeBlock JSONObjectBlock to execute upon completion
  */
 +(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary*)params orBodyString:(NSString*)bodyString headers:(NSDictionary*)headers completion:(JSONObjectBlock)completeBlock;
+
+/**
+ * Makes a request to the given URL address and fetches a JSON response.
+ * @param urlString the URL as a string
+ * @param method the method of the request as a string
+ * @param params a dictionary of key / value pairs to be send as variables to the request
+ * @param bodyData the body of the POST request as raw binary data
+ * @param headers the headers to set on the request - overrides those in +requestHeaders
+ * @param completeBlock JSONObjectBlock to execute upon completion
+ */
++(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary *)params orBodyData:(NSData*)bodyData headers:(NSDictionary*)headers completion:(JSONObjectBlock)completeBlock;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - POST synchronious JSON calls

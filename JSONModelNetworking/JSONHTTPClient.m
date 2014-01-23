@@ -1,7 +1,7 @@
 //
 //  JSONModelHTTPClient.m
 //
-//  @version 0.9.3
+//  @version 0.11.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -29,13 +29,8 @@ NSString* const kContentTypeWWWEncoded   = @"application/x-www-form-urlencoded";
 /**
  * Defaults for HTTP requests
  */
-#ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
-static int defaultTextEncoding = NSUTF8StringEncoding;
-static int defaultCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
-#else
-static long defaultTextEncoding = NSUTF8StringEncoding;
-static long defaultCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
-#endif
+static NSStringEncoding defaultTextEncoding = NSUTF8StringEncoding;
+static NSURLRequestCachePolicy defaultCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
 
 static int defaultTimeoutInSeconds = 60;
 
@@ -104,7 +99,7 @@ static NSString* requestContentType = nil;
     //fetch the charset name from the default string encoding
     NSString* contentType = requestContentType;
 
-    if ([contentType isEqualToString:kContentTypeAutomatic]) {
+    if (requestString.length>0 && [contentType isEqualToString:kContentTypeAutomatic]) {
         //check for "eventual" JSON array or dictionary
         NSString* firstAndLastChar = [NSString stringWithFormat:@"%@%@",
                                       [requestString substringToIndex:1],
@@ -143,7 +138,7 @@ static NSString* requestContentType = nil;
 }
 
 #pragma mark - networking worker methods
-+(NSData*)syncRequestDataFromURL:(NSURL*)url method:(NSString*)method requestBody:(NSString*)bodyString headers:(NSDictionary*)headers etag:(NSString**)etag error:(JSONModelError**)err
++(NSData*)syncRequestDataFromURL:(NSURL*)url method:(NSString*)method requestBody:(NSData*)bodyData headers:(NSDictionary*)headers etag:(NSString**)etag error:(JSONModelError**)err
 {
     //turn on network indicator
     if (doesControlIndicator) dispatch_async(dispatch_get_main_queue(), ^{[self setNetworkIndicatorVisible:YES];});
@@ -155,7 +150,8 @@ static NSString* requestContentType = nil;
 
     if ([requestContentType isEqualToString:kContentTypeAutomatic]) {
         //automatic content type
-        if (bodyString) {
+        if (bodyData) {
+            NSString *bodyString = [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding];
             [request setValue: [self contentTypeForRequestString: bodyString] forHTTPHeaderField:@"Content-type"];
         }
     } else {
@@ -173,17 +169,9 @@ static NSString* requestContentType = nil;
         [request setValue:headers[key] forHTTPHeaderField:key];
     }
     
-    if (bodyString) {
-        //BODY params
-        NSData* bodyData = [bodyString dataUsingEncoding:defaultTextEncoding];
-        
+    if (bodyData) {
         [request setHTTPBody: bodyData];
-#ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
-        [request setValue:[NSString stringWithFormat:@"%i", [bodyData length]] forHTTPHeaderField:@"Content-Length"];
-#else
-        [request setValue:[NSString stringWithFormat:@"%ld", [bodyData length]] forHTTPHeaderField:@"Content-Length"];
-#endif
-        
+        [request setValue:[NSString stringWithFormat:@"%lu", (unsigned long)bodyData.length] forHTTPHeaderField:@"Content-Length"];
     }
     
     //prepare output
@@ -253,7 +241,7 @@ static NSString* requestContentType = nil;
     //call the more general synq request method
     return [self syncRequestDataFromURL: url
                                  method: method
-                            requestBody: [method isEqualToString:kHTTPMethodPOST]?paramsString:nil
+                            requestBody: [method isEqualToString:kHTTPMethodPOST]?[paramsString dataUsingEncoding:NSUTF8StringEncoding]:nil
                                 headers: headers
                                    etag: etag
                                   error: err];
@@ -270,7 +258,17 @@ static NSString* requestContentType = nil;
                      completion:completeBlock];
 }
 
-+(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary*)params orBodyString:(NSString*)bodyString headers:(NSDictionary*)headers completion:(JSONObjectBlock)completeBlock
++(void)JSONFromURLWithString:(NSString *)urlString method:(NSString *)method params:(NSDictionary *)params orBodyString:(NSString *)bodyString headers:(NSDictionary *)headers completion:(JSONObjectBlock)completeBlock
+{
+    [self JSONFromURLWithString:urlString
+                         method:method
+                         params:params
+                     orBodyData:[bodyString dataUsingEncoding:NSUTF8StringEncoding]
+                        headers:headers
+                     completion:completeBlock];
+}
+
++(void)JSONFromURLWithString:(NSString*)urlString method:(NSString*)method params:(NSDictionary *)params orBodyData:(NSData*)bodyData headers:(NSDictionary*)headers completion:(JSONObjectBlock)completeBlock
 {
     NSDictionary* customHeaders = headers;
 
@@ -282,10 +280,10 @@ static NSString* requestContentType = nil;
         NSString* etag = nil;
         
         @try {
-            if (bodyString) {
+            if (bodyData) {
                 responseData = [self syncRequestDataFromURL: [NSURL URLWithString:urlString]
                                                      method: method
-                                                requestBody: bodyString
+                                                requestBody: bodyData
                                                     headers: customHeaders
                                                        etag: &etag
                                                       error: &error];
@@ -310,12 +308,16 @@ static NSString* requestContentType = nil;
 
         //step 4: if there's a response at this and no errors, convert to object
         if (error==nil && jsonObject==nil) {
-            //convert to an object
-            jsonObject = [NSJSONSerialization JSONObjectWithData:responseData options:kNilOptions error:&error];
+			// Note: it is possible to have a valid response with empty response data (204 No Content).
+			// So only create the JSON object if there is some response data.
+			if(responseData.length > 0)
+			{
+				//convert to an object
+				jsonObject = [NSJSONSerialization JSONObjectWithData:responseData options:kNilOptions error:&error];
+			}
         }
-        
         //step 4.5: cover an edge case in which meaningful content is return along an error HTTP status code
-        if (error && responseData && jsonObject==nil) {
+        else if (error && responseData && jsonObject==nil) {
             //try to get the JSON object, while preserving the origianl error object
             jsonObject = [NSJSONSerialization JSONObjectWithData:responseData options:kNilOptions error:nil];
         }

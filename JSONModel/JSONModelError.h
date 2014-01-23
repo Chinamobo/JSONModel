@@ -1,7 +1,7 @@
 //
 //  JSONModelError.h
 //
-//  @version 0.9.3
+//  @version 0.11.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -45,6 +45,13 @@ extern NSString* const kJSONModelMissingKeys;
  * of the mismatched types.
  */
 extern NSString* const kJSONModelTypeMismatch;
+
+/**
+ * If an error occurs in a nested model, check the userInfo dictionary of
+ * the JSONModelError instance you get back - under the kJSONModelKeyPath
+ * key you will find key-path at which the error occurred.
+ */
+extern NSString* const kJSONModelKeyPath;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -91,6 +98,15 @@ extern NSString* const kJSONModelTypeMismatch;
  * Creates a JSONModelError instance with code kJSONModelErrorNilInput = 5
  */
 +(id)errorInputIsNil;
+
+/**
+ * Creates a new JSONModelError with the same values plus information about the key-path of the error.
+ * Properties in the new error object are the same as those from the receiver,
+ * except that a new key kJSONModelKeyPath is added to the userInfo dictionary.
+ * This key contains the component string parameter. If the key is already present
+ * then the new error object has the component string prepended to the existing value.
+ */
+- (instancetype)errorByPrependingKeyPathComponent:(NSString*)component;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 @end

@@ -1,7 +1,7 @@
 //
 //  JSONModel+networking.m
 //
-//  @version 0.9.3
+//  @version 0.11.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -33,12 +33,12 @@ BOOL _isLoading;
     _isLoading = isLoading;
 }
 
--(id)initFromURLWithString:(NSString *)urlString completion:(JSONModelBlock)completeBlock
+-(instancetype)initFromURLWithString:(NSString *)urlString completion:(JSONModelBlock)completeBlock
 {
-    self = [super init];
+    id placeholder = [super init];
     __block id blockSelf = self;
     
-    if (self) {
+    if (placeholder) {
         //initialization
         self.isLoading = YES;
         
@@ -58,7 +58,52 @@ BOOL _isLoading;
                                           
                                       }];
     }
-    return self;
+    return placeholder;
+}
+
++ (void)getModelFromURLWithString:(NSString*)urlString completion:(JSONModelBlock)completeBlock
+{
+	[JSONHTTPClient getJSONFromURLWithString:urlString
+								  completion:^(NSDictionary* jsonDict, JSONModelError* err)
+	{
+		JSONModel* model = nil;
+
+		if(err == nil)
+		{
+			model = [[self alloc] initWithDictionary:jsonDict error:&err];
+		}
+
+		if(completeBlock != nil)
+		{
+			dispatch_async(dispatch_get_main_queue(), ^
+			{
+				completeBlock(model, err);
+			});
+		}
+    }];
+}
+
++ (void)postModel:(JSONModel*)post toURLWithString:(NSString*)urlString completion:(JSONModelBlock)completeBlock
+{
+	[JSONHTTPClient postJSONFromURLWithString:urlString
+								   bodyString:[post toJSONString]
+								   completion:^(NSDictionary* jsonDict, JSONModelError* err)
+	{
+		JSONModel* model = nil;
+
+		if(err == nil)
+		{
+			model = [[self alloc] initWithDictionary:jsonDict error:&err];
+		}
+
+		if(completeBlock != nil)
+		{
+			dispatch_async(dispatch_get_main_queue(), ^
+			{
+				completeBlock(model, err);
+			});
+		}
+	}];
 }
 
 @end

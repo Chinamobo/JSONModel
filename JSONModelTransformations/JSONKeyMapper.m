@@ -1,7 +1,7 @@
 //
 //  JSONKeyMapper.m
 //
-//  @version 0.11.0
+//  @version 0.12.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -146,6 +146,25 @@
     return [[self alloc] initWithJSONToModelBlock:toModel
                                  modelToJSONBlock:toJSON];
     
+}
+
++(instancetype)mapperFromUpperCaseToLowerCase
+{
+    JSONModelKeyMapBlock toModel = ^ NSString* (NSString* keyName) {
+        NSString*lowercaseString = [keyName lowercaseString];
+        return lowercaseString;
+    };
+
+    JSONModelKeyMapBlock toJSON = ^ NSString* (NSString* keyName) {
+
+        NSString *uppercaseString = [keyName uppercaseString];
+
+        return uppercaseString;
+    };
+
+    return [[self alloc] initWithJSONToModelBlock:toModel
+                                 modelToJSONBlock:toJSON];
+
 }
 
 @end

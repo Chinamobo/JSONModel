@@ -1,7 +1,7 @@
 //
 //  JSONAPI.m
 //
-//  @version 0.11.0
+//  @version 0.12.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -147,6 +147,6 @@ static long jsonRpcId = 0;
 
 @end
 
-#pragma - helper rpc error model class implementation
+#pragma mark - helper rpc error model class implementation
 @implementation JSONAPIRPCErrorModel
 @end

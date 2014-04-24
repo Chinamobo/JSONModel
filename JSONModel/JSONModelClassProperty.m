@@ -1,7 +1,7 @@
 //
 //  JSONModelClassProperty.m
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -21,7 +21,7 @@
 -(NSString*)description
 {
     //build the properties string for the current class property
-    NSMutableArray* properties = [NSMutableArray arrayWithCapacity:4];
+    NSMutableArray* properties = [NSMutableArray arrayWithCapacity:8];
     
     if (self.isIndex) [properties addObject:@"Index"];
     if (self.isOptional) [properties addObject:@"Optional"];

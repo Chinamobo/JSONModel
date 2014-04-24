@@ -1,7 +1,7 @@
 //
 //  JSONModelArray.m
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -34,27 +34,32 @@
     return self;
 }
 
--(id)firstObject
+- (id)firstObject
 {
     return [self objectAtIndex:0];
 }
 
--(id)lastObject
+- (id)lastObject
 {
-    return [self objectAtIndex: _storage.count-1];
+    return [self objectAtIndex:_storage.count - 1];
 }
 
--(id)objectAtIndex:(NSUInteger)index
+- (id)objectAtIndex:(NSUInteger)index
 {
-    id obj = _storage[index];
-    if (![obj isMemberOfClass:_targetClass]) {
+	return [self objectAtIndexedSubscript:index];
+}
+
+- (id)objectAtIndexedSubscript:(NSUInteger)index
+{
+    id object = _storage[index];
+    if (![object isMemberOfClass:_targetClass]) {
         NSError* err = nil;
-        obj = [[_targetClass alloc] initWithDictionary:obj error:&err];
-        if (obj) {
-            _storage[index] = obj;
+        object = [[_targetClass alloc] initWithDictionary:object error:&err];
+        if (object) {
+            _storage[index] = object;
         }
     }
-    return obj;
+    return object;
 }
 
 - (void)forwardInvocation:(NSInvocation *)anInvocation
@@ -65,7 +70,7 @@
 -(id)forwardingTargetForSelector:(SEL)selector
 {
     static NSArray* overridenMethods = nil;
-    if (!overridenMethods) overridenMethods = @[@"initWithArray:modelClass:",@"objectAtIndex:",@"count",@"modelWithIndexValue:",@"description",@"mutableCopy",@"firstObject",@"lastObject"];
+    if (!overridenMethods) overridenMethods = @[@"initWithArray:modelClass:",@"objectAtIndex:",@"objectAtIndexedSubscript:", @"count",@"modelWithIndexValue:",@"description",@"mutableCopy",@"firstObject",@"lastObject"];
     if ([overridenMethods containsObject:NSStringFromSelector(selector)]) {
         return self;
     }

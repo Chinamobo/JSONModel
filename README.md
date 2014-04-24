@@ -1,5 +1,7 @@
 ## Magical Data Modelling Framework for JSON
 
+*New*: In version 0.13.0 automatic NSCopying/NSCoding support.
+
 *New*: In version 0.12.0 I added experimental support for exporting **JSON models** to **CoreData**.
 
 Give it a try and let me know, post an issue or just get in touch. Try something like that:
@@ -451,7 +453,7 @@ Examples
 
 #### Using the built-in thin HTTP client
 
-```ruby
+```objective-c
 
 //add extra headers
 [[JSONHTTPClient requestHeaders] setValue:@"MySecret" forKey:@"AuthorizationToken"];
@@ -468,7 +470,7 @@ Examples
 
 #### Export model to NSDictionary or to JSON text
 
-```ruby
+```objective-c
 
 ProductModel* pm = [[ProductModel alloc] initWithString:jsonString error:nil];
 pm.name = @"Changed Name";
@@ -481,8 +483,29 @@ NSString* string = [pm toJSONString];
 
 ```
 
+#### Custom data transformers
+
+```objective-c
+
+@implementation JSONValueTransformer (CustomTransformer)
+
+- (NSDate *)NSDateFromNSString:(NSString*)string {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:APIDateFormat];
+    return [formatter dateFromString:string];
+}
+
+- (NSString *)JSONObjectFromNSDate:(NSDate *)date {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:APIDateFormat];
+    return [formatter stringFromDate:date];
+}
+
+@end
+
+```
+
 * json validation
-* data transformations
 * error handling
 * custom data validation
 * automatic compare and equality features

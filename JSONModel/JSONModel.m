@@ -1,7 +1,7 @@
 //
 //  JSONModel.m
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -44,6 +44,9 @@ static JSONKeyMapper* globalKeyMapper = nil;
 
 #pragma mark - JSONModel implementation
 @implementation JSONModel
+{
+    NSString* _description;
+}
 
 #pragma mark - initialization methods
 
@@ -546,14 +549,21 @@ static JSONKeyMapper* globalKeyMapper = nil;
             //get property name
             objc_property_t property = properties[i];
             const char *propertyName = property_getName(property);
-            p.name = [NSString stringWithUTF8String:propertyName];
+            p.name = @(propertyName);
             
             //JMLog(@"property: %@", p.name);
             
             //get property attributes
             const char *attrs = property_getAttributes(property);
-            NSString* propertyAttributes = [NSString stringWithUTF8String:attrs];
+            NSString* propertyAttributes = @(attrs);
+            NSArray* attributeItems = [propertyAttributes componentsSeparatedByString:@","];
             
+            //ignore read-only properties
+            if ([attributeItems containsObject:@"R"]) {
+                continue; //to next property
+            }
+            
+            //check for 64b BOOLs
             if ([propertyAttributes hasPrefix:@"Tc,"]) {
                 //mask BOOLs as structs so they can have custom convertors
                 p.structName = @"BOOL";
@@ -597,8 +607,6 @@ static JSONKeyMapper* globalKeyMapper = nil;
                         p.convertsOnDemand = YES;
                     } else if([protocolName isEqualToString:@"Ignore"]) {
                         p = nil;
-                    } else if ([self propertyIsReadOnly:p.name]) {
-                        p = nil;
                     } else {
                         p.protocol = protocolName;
                     }
@@ -636,7 +644,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
 
             }
 
-            NSString *nsPropertyName = [NSString stringWithCString:propertyName encoding:NSUTF8StringEncoding];
+            NSString *nsPropertyName = @(propertyName);
             if([[self class] propertyIsOptional:nsPropertyName]){
                 p.isOptional = YES;
             }
@@ -645,7 +653,8 @@ static JSONKeyMapper* globalKeyMapper = nil;
                 p = nil;
             }
             
-            if([self propertyIsReadOnly:nsPropertyName]) {
+            //few cases where JSONModel will ignore properties automatically
+            if ([propertyType isEqualToString:@"Block"]) {
                 p = nil;
             }
             
@@ -870,7 +879,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
     
     //inspect next level
     NSString* nextHierarchyLevelKeyName = [keyPath substringToIndex: dotLocation];
-    NSDictionary* nextLevelDictionary = [*dict objectForKey:nextHierarchyLevelKeyName];
+    NSDictionary* nextLevelDictionary = (*dict)[nextHierarchyLevelKeyName];
 
     if (nextLevelDictionary==nil) {
         //create non-existing next level here
@@ -1187,7 +1196,8 @@ static JSONKeyMapper* globalKeyMapper = nil;
     NSMutableString* text = [NSMutableString stringWithFormat:@"<%@> \n", [self class]];
     
     for (JSONModelClassProperty *p in [self __properties__]) {
-        id value = [self valueForKey:p.name];
+        
+        id value = ([p.name isEqualToString:@"description"])?self->_description:[self valueForKey:p.name];
         NSString* valueDescription = (value)?[value description]:@"<nil>";
         
         if (p.isStandardJSONType && ![value respondsToSelector:@selector(count)] && [valueDescription length]>60 && !p.convertsOnDemand) {
@@ -1224,22 +1234,31 @@ static JSONKeyMapper* globalKeyMapper = nil;
     return NO;
 }
 
--(BOOL)propertyIsReadOnly: (NSString*)key
-{
-    NSString *setterString = [NSString stringWithFormat:@"set%@%@:",
-                              [[key substringToIndex:1] capitalizedString],
-                              [key substringFromIndex:1]];
-    
-    if ([self respondsToSelector:NSSelectorFromString(setterString)]) {
-        return NO;
-    }
-    return YES;
-}
-
 #pragma mark - working with incomplete models
 -(void)mergeFromDictionary:(NSDictionary*)dict useKeyMapping:(BOOL)useKeyMapping
 {
     [self __importDictionary:dict withKeyMapper:(useKeyMapping)?[self __keyMapper]:nil validation:NO error:nil];
+}
+
+#pragma mark - NSCopying, NSCoding
+-(instancetype)copyWithZone:(NSZone *)zone
+{
+    return [NSKeyedUnarchiver unarchiveObjectWithData:
+        [NSKeyedArchiver archivedDataWithRootObject:self]
+     ];
+}
+
+-(instancetype)initWithCoder:(NSCoder *)decoder
+{
+    NSString* json = [decoder decodeObjectForKey:@"json"];
+    
+    self = [self initWithString:json error:nil];
+    return self;
+}
+
+-(void)encodeWithCoder:(NSCoder *)encoder
+{
+    [encoder encodeObject:self.toJSONString forKey:@"json"];
 }
 
 @end

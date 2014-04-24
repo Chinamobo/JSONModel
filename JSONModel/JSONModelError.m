@@ -1,7 +1,7 @@
 //
 //  JSONModelError.m
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -79,10 +79,10 @@ NSString* const kJSONModelKeyPath = @"kJSONModelKeyPath";
     NSMutableDictionary* userInfo = [self.userInfo mutableCopy];
 
     // Create or update the key-path
-    NSString* existingPath = [userInfo objectForKey:kJSONModelKeyPath];
+    NSString* existingPath = userInfo[kJSONModelKeyPath];
     NSString* separator = [existingPath hasPrefix:@"["] ? @"" : @".";
     NSString* updatedPath = (existingPath == nil) ? component : [component stringByAppendingFormat:@"%@%@", separator, existingPath];
-    [userInfo setObject:updatedPath forKey:kJSONModelKeyPath];
+    userInfo[kJSONModelKeyPath] = updatedPath;
 
     // Create the new error
     return [JSONModelError errorWithDomain:self.domain

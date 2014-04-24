@@ -1,7 +1,7 @@
 //
 //  JSONModel.h
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -21,7 +21,12 @@
 #import "JSONKeyMapper.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+#if TARGET_IPHONE_SIMULATOR
+#define JMLog( s, ... ) NSLog( @"[%@:%d] %@", [[NSString stringWithUTF8String:__FILE__] \
+lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
+#else
 #define JMLog( s, ... )
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma mark - Property Protocols
@@ -81,7 +86,7 @@
  * A protocol describing an abstract JSONModel class
  * JSONModel conforms to this protocol, so it can use itself abstractly
  */
-@protocol AbstractJSONModelProtocol <NSObject>
+@protocol AbstractJSONModelProtocol <NSObject, NSCopying, NSCoding>
 
 @required
   /**

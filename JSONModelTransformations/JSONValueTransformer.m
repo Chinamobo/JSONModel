@@ -1,7 +1,7 @@
 //
 //  JSONValueTransformer.m
 //
-//  @version 0.12.0
+//  @version 0.13.0
 //  @author Marin Todorov, http://www.touch-code-magazine.com
 //
 
@@ -220,6 +220,20 @@ extern BOOL isNull(id value)
     [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZ"];
     
     return [dateFormatter stringFromDate:date];
+}
+
+#pragma mark - hidden transform for empty dictionaries
+//https://github.com/icanzilb/JSONModel/issues/163
+-(NSDictionary*)__NSDictionaryFromNSArray:(NSArray*)array
+{
+    if (array.count==0) return @{};
+    return (id)array;
+}
+
+-(NSMutableDictionary*)__NSMutableDictionaryFromNSArray:(NSArray*)array
+{
+    if (array.count==0) return [[self __NSDictionaryFromNSArray:array] mutableCopy];
+    return (id)array;
 }
 
 @end

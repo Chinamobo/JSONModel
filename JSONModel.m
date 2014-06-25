@@ -704,7 +704,7 @@ static JSONKeyMapper* globalKeyMapper = nil;
         if ([property.type isSubclassOfClass:[NSArray class]]) {
 
 			// Expecting an array, make sure 'value' is an array
-			if(![[value class] isSubclassOfClass:[NSArray class]])
+			if(![[value class] isSubclassOfClass:[NSArray class]] && ![value isEqual:@(NO)])
 			{
 				if(err != nil)
 				{
@@ -714,6 +714,10 @@ static JSONKeyMapper* globalKeyMapper = nil;
 				}
 				return nil;
 			}
+            
+            if ([value isEqual:@(NO)]) {
+                value = @[];
+            }
 
             if (property.convertsOnDemand) {
                 //on demand conversion

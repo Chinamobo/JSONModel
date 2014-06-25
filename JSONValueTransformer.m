@@ -22,6 +22,7 @@ extern BOOL isNull(id value)
 {
     if (!value) return YES;
     if ([value isKindOfClass:[NSNull class]]) return YES;
+    if ([value isEqual:@(NO)]) return YES;
     
     return NO;
 }

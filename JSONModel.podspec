@@ -20,7 +20,12 @@ Pod::Spec.new do |s|
 
   s.public_header_files = '*.h'
   s.subspec 'Core' do |ss|
-    ss.source_files = 'JSONModel.h'
+    ss.source_files = 'JSONModel.{h,m}',
+      'JSONKeyMapper.{h,m}',
+      'JSONModelArray.{h,m}',
+      'JSONModelClassProperty.{h,m}',
+      'JSONModelError.{h,m}',
+      'JSONValueTransformer.{h,m}'
   end
 
   s.subspec 'CoreData' do |ss|

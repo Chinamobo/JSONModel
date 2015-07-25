@@ -134,7 +134,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - JSONModel interface
 /**
- * The JSONModel is an abstract model class, you should ot instantiate it directly,
+ * The JSONModel is an abstract model class, you should not instantiate it directly,
  * as it does not have any properties, and therefore cannot serve as a data model.
  * Instead you should subclass it, and define the properties you want your data model
  * to have as properties of your own class.
@@ -182,6 +182,12 @@
   -(NSString*)toJSONString;
 
   /**
+   * Export the whole object to a JSON data text string
+   * @return JSON text data describing the data model
+   */
+  -(NSData*)toJSONData;
+
+  /**
    * Export the specified properties of the object to a dictionary
    * @param propertyNames the properties to export; if nil, all properties exported
    * @return dictionary containing the data model
@@ -194,6 +200,13 @@
    * @return JSON text describing the data model
    */
   -(NSString*)toJSONStringWithKeys:(NSArray*)propertyNames;
+
+  /**
+   * Export the specified properties of the object to a JSON data text string
+   * @param propertyNames the properties to export; if nil, all properties exported
+   * @return JSON text data describing the data model
+   */
+  -(NSData*)toJSONDataWithKeys:(NSArray*)propertyNames;
 
 /** @name Batch methods */
 

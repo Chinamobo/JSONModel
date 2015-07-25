@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name     = 'JSONModel'
-  s.version  = '1.0.2b'
+  s.version  = '1.1.0'
   s.license  = { :type => 'MIT', :file => 'LICENSE_jsonmodel.txt' }
   s.homepage = 'https://github.com/Chinamobo/JSONModel'
   s.authors  = { "Marin Todorov" => "touch-code-magazine@underplot.com" }
@@ -12,8 +12,7 @@ Pod::Spec.new do |s|
   
   s.source   = {
    :git => "https://github.com/Chinamobo/JSONModel.git",
-   :tag => s.version.to_s ,
-   :submodules => true
+   :tag => s.version.to_s
   }
   
   s.default_subspec = 'Core'
@@ -26,11 +25,5 @@ Pod::Spec.new do |s|
       'JSONModelClassProperty.{h,m}',
       'JSONModelError.{h,m}',
       'JSONValueTransformer.{h,m}'
-  end
-
-  s.subspec 'CoreData' do |ss|
-    ss.source_files = 'JSONModel+CoreData.{h,m}'
-    ss.ios.frameworks = 'CoreData'
-    ss.osx.frameworks = 'CoreData'
   end
 end

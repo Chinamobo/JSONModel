@@ -1,13 +1,15 @@
 Pod::Spec.new do |s|
   s.name     = 'JSONModel'
-  s.version  = '1.1.0'
+  s.version  = '1.2.0'
   s.license  = { :type => 'MIT', :file => 'LICENSE_jsonmodel.txt' }
   s.homepage = 'https://github.com/Chinamobo/JSONModel'
   s.authors  = { "Marin Todorov" => "touch-code-magazine@underplot.com" }
   s.summary  = 'Minimized JSONModel Repository'
   
-  s.ios.deployment_target = '5.0'
+  s.ios.deployment_target = '6.0'
   s.osx.deployment_target = '10.7'
+  s.watchos.deployment_target = '2.0'
+  s.tvos.deployment_target = '9.0'
   s.requires_arc = true
   
   s.source   = {

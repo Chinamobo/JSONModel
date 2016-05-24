@@ -173,32 +173,34 @@ static JSONKeyMapper* globalKeyMapper = nil;
         return nil;
     }
 
-    //create a class instance
-    self = [self init];
-    if (!self) {
+    @synchronized(self) {
+        //create a class instance
+        self = [self init];
+        if (!self) {
+
+            //super init didn't succeed
+            if (err) *err = [JSONModelError errorModelIsInvalid];
+            return nil;
+        }
+
+        //check incoming data structure
+        if (![self __doesDictionary:dict matchModelWithKeyMapper:self.__keyMapper error:err]) {
+            return nil;
+        }
+
+        //import the data from a dictionary
+        if (![self __importDictionary:dict withKeyMapper:self.__keyMapper validation:YES error:err]) {
+            return nil;
+        }
+
+        //run any custom model validation
+        if (![self validate:err]) {
+            return nil;
+        }
         
-        //super init didn't succeed
-        if (err) *err = [JSONModelError errorModelIsInvalid];
-        return nil;
+        //model is valid! yay!
+        return self;
     }
-    
-    //check incoming data structure
-    if (![self __doesDictionary:dict matchModelWithKeyMapper:self.__keyMapper error:err]) {
-        return nil;
-    }
-    
-    //import the data from a dictionary
-    if (![self __importDictionary:dict withKeyMapper:self.__keyMapper validation:YES error:err]) {
-        return nil;
-    }
-    
-    //run any custom model validation
-    if (![self validate:err]) {
-        return nil;
-    }
-    
-    //model is valid! yay!
-    return self;
 }
 
 -(JSONKeyMapper*)__keyMapper

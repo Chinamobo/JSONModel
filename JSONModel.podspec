@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name     = 'JSONModel'
-  s.version  = '1.2.0'
-  s.license  = { :type => 'MIT', :file => 'LICENSE_jsonmodel.txt' }
+  s.version  = '1.5.1'
+  s.license  = { :type => 'MIT', :file => 'LICENSE_JSONModel' }
   s.homepage = 'https://github.com/Chinamobo/JSONModel'
   s.authors  = { "Marin Todorov" => "touch-code-magazine@underplot.com" }
   s.summary  = 'Minimized JSONModel Repository'
@@ -16,16 +16,5 @@ Pod::Spec.new do |s|
    :git => "https://github.com/Chinamobo/JSONModel.git",
    :tag => s.version.to_s
   }
-  
-  s.default_subspec = 'Core'
-
-  s.public_header_files = '*.h'
-  s.subspec 'Core' do |ss|
-    ss.source_files = 'JSONModel.{h,m}',
-      'JSONKeyMapper.{h,m}',
-      'JSONModelArray.{h,m}',
-      'JSONModelClassProperty.{h,m}',
-      'JSONModelError.{h,m}',
-      'JSONValueTransformer.{h,m}'
-  end
+  s.source_files = '*.{h,m}'
 end

@@ -28,7 +28,11 @@ To use latest code:
 pod 'JSONModel', :git => 'https://github.com/Chinamobo/JSONModel.git', :branch => 'develop'
 ```
 
-Carthage support comming soon.
+Useing Carthage:
+
+```ruby
+github "Chinamobo/JSONModel" "develop"
+```
 
 ## Changes
 
